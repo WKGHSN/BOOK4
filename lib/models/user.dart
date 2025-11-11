@@ -25,6 +25,9 @@ class User extends HiveObject {
   @HiveField(6)
   List<String> favoriteGenres;
 
+  @HiveField(7)
+  List<String> readBooks;
+
   User({
     required this.id,
     required this.name,
@@ -33,6 +36,7 @@ class User extends HiveObject {
     this.favoriteBooks = const [],
     this.booksRead = 0,
     this.favoriteGenres = const [],
+    this.readBooks = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -44,6 +48,7 @@ class User extends HiveObject {
       'favoriteBooks': favoriteBooks,
       'booksRead': booksRead,
       'favoriteGenres': favoriteGenres,
+      'readBooks': readBooks,
     };
   }
 
@@ -56,6 +61,7 @@ class User extends HiveObject {
       favoriteBooks: List<String>.from(map['favoriteBooks'] ?? []),
       booksRead: map['booksRead'] ?? 0,
       favoriteGenres: List<String>.from(map['favoriteGenres'] ?? []),
+      readBooks: List<String>.from(map['readBooks'] ?? []),
     );
   }
 }

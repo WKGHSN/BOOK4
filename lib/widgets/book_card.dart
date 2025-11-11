@@ -15,10 +15,15 @@ class BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkText : AppColors.darkBrownText;
+    final secondaryTextColor = isDark ? AppColors.darkTextSecondary : AppColors.softBrown;
+    
     return GestureDetector(
       onTap: onTap,
       child: Card(
         clipBehavior: Clip.antiAlias,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -63,7 +68,9 @@ class BookCard extends StatelessWidget {
                     // Назва
                     Text(
                       book.title,
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: textColor,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -72,7 +79,9 @@ class BookCard extends StatelessWidget {
                     // Автор
                     Text(
                       book.author,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: secondaryTextColor,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -94,7 +103,9 @@ class BookCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           book.averageRating.toStringAsFixed(1),
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: secondaryTextColor,
+                          ),
                         ),
                       ],
                     ),

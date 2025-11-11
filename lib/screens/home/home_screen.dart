@@ -23,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   List<Book> _allBooks = [];
   List<Book> _filteredBooks = [];
-  User? _currentUser;
   String? _selectedGenre;
   
   late AnimationController _fadeController;
@@ -56,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _loadData() {
     setState(() {
-      _currentUser = HiveService.getCurrentUser();
       _allBooks = HiveService.getAllBooks();
       _filteredBooks = _allBooks;
     });
@@ -145,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ],
           ),
 
-          // Фільтр категорій з анімацією
+          // Фільтр категорій з плавною анімацією прокрутки
           SliverToBoxAdapter(
             child: Container(
               height: 56,
@@ -153,58 +151,76 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                physics: const BouncingScrollPhysics(),
+                // Плавна фізика прокрутки з ефектом перелистування
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
                 itemCount: _genres.length,
                 itemBuilder: (context, index) {
                   final genre = _genres[index];
                   final isSelected = _selectedGenre == genre || 
                       (_selectedGenre == null && genre == 'Всі');
                   
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () => _selectGenre(genre),
+                  return TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    tween: Tween<double>(
+                      begin: 0.0,
+                      end: isSelected ? 1.0 : 0.0,
+                    ),
+                    builder: (context, value, child) {
+                      final scaleValue = 1.0 + (value * 0.05);
+                      return Transform.scale(
+                        scale: scaleValue,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected 
-                                ? AppColors.goldenAccent
-                                : (isDark 
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.white.withValues(alpha: 0.8)),
+                          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: isSelected ? [
-                              BoxShadow(
-                                color: AppColors.goldenAccent.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                            onTap: () => _selectGenre(genre),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
                               ),
-                            ] : [],
-                          ),
-                          child: Text(
-                            genre,
-                            style: TextStyle(
-                              color: isSelected 
-                                  ? AppColors.darkBrownText 
-                                  : (isDark 
-                                      ? Colors.white 
-                                      : AppColors.softBrown),
-                              fontWeight: isSelected 
-                                  ? FontWeight.bold 
-                                  : FontWeight.normal,
+                              decoration: BoxDecoration(
+                                color: isSelected 
+                                    ? AppColors.goldenAccent
+                                    : (isDark 
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : Colors.white.withValues(alpha: 0.8)),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: isSelected ? [
+                                  BoxShadow(
+                                    color: AppColors.goldenAccent.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    spreadRadius: value * 2,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ] : [],
+                              ),
+                              child: Text(
+                                genre,
+                                style: TextStyle(
+                                  color: isSelected 
+                                      ? AppColors.darkBrownText 
+                                      : (isDark 
+                                          ? Colors.white 
+                                          : AppColors.softBrown),
+                                  fontWeight: isSelected 
+                                      ? FontWeight.bold 
+                                      : FontWeight.normal,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                      ),);
+                    },
                   );
                 },
               ),

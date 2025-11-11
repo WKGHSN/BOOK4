@@ -183,6 +183,43 @@ class HiveService {
     return [];
   }
 
+  // Прочитані книги
+  static Future<void> toggleReadStatus(String userId, String bookId) async {
+    final user = getUser(userId);
+    if (user != null) {
+      final readBooks = List<String>.from(user.readBooks);
+      if (readBooks.contains(bookId)) {
+        readBooks.remove(bookId);
+        user.booksRead = (user.booksRead - 1).clamp(0, 999999);
+      } else {
+        readBooks.add(bookId);
+        user.booksRead = user.booksRead + 1;
+      }
+      user.readBooks = readBooks;
+      await saveUser(user);
+    }
+  }
+
+  static bool isBookRead(String userId, String bookId) {
+    final user = getUser(userId);
+    if (user != null) {
+      return user.readBooks.contains(bookId);
+    }
+    return false;
+  }
+
+  static List<Book> getReadBooks(String userId) {
+    final user = getUser(userId);
+    if (user != null) {
+      return user.readBooks
+          .map((bookId) => getBook(bookId))
+          .where((book) => book != null)
+          .cast<Book>()
+          .toList();
+    }
+    return [];
+  }
+
   // Тема
   static Future<void> setTheme(bool isDark) async {
     final box = getSettingsBox();

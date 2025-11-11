@@ -17,6 +17,7 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   bool _isFavorite = false;
+  bool _isRead = false;
   double? _userRating;
 
   @override
@@ -30,6 +31,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     if (currentUser != null) {
       setState(() {
         _isFavorite = HiveService.isFavorite(currentUser.id, widget.book.id);
+        _isRead = HiveService.isBookRead(currentUser.id, widget.book.id);
         final rating = HiveService.getUserBookRating(currentUser.id, widget.book.id);
         _userRating = rating?.rating;
       });
@@ -52,6 +54,29 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   : 'Видалено з улюблених',
             ),
             duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleReadStatus() async {
+    final currentUser = HiveService.getCurrentUser();
+    if (currentUser != null) {
+      await HiveService.toggleReadStatus(currentUser.id, widget.book.id);
+      setState(() {
+        _isRead = !_isRead;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isRead
+                  ? 'Книгу позначено як прочитану!'
+                  : 'Статус "прочитано" знято',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: _isRead ? Colors.green : null,
           ),
         );
       }
@@ -139,6 +164,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkText : AppColors.darkBrownText;
+    final secondaryTextColor = isDark ? AppColors.darkTextSecondary : AppColors.softBrown;
 
     return Scaffold(
       body: CustomScrollView(
@@ -147,6 +175,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
+            iconTheme: IconThemeData(
+              color: Colors.white,
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: widget.book.coverUrl != null
                   ? Image.asset(
@@ -176,7 +207,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               IconButton(
                 icon: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _isFavorite ? Colors.red : null,
+                  color: _isFavorite ? Colors.red : Colors.white,
                 ),
                 onPressed: _toggleFavorite,
               ),
@@ -193,7 +224,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   // Назва книги
                   Text(
                     widget.book.title,
-                    style: theme.textTheme.displaySmall,
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: textColor,
+                    ),
                   ),
                   const SizedBox(height: 8),
 
@@ -201,7 +234,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   Text(
                     widget.book.author,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: AppColors.softBrown,
+                      color: secondaryTextColor,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -219,7 +252,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                     child: Text(
                       widget.book.genre,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.darkBrownText,
+                        color: isDark ? AppColors.darkText : AppColors.darkBrownText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -242,7 +275,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       const SizedBox(width: 8),
                       Text(
                         '${widget.book.averageRating.toStringAsFixed(1)} (${widget.book.ratingCount})',
-                        style: theme.textTheme.bodyMedium,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: textColor,
+                        ),
                       ),
                     ],
                   ),
@@ -251,12 +286,16 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   // Опис
                   Text(
                     'Опис',
-                    style: theme.textTheme.titleLarge,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: textColor,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     widget.book.description,
-                    style: theme.textTheme.bodyLarge,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: textColor,
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -279,8 +318,31 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _toggleReadStatus,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isRead 
+                            ? Colors.green 
+                            : (isDark ? AppColors.darkSurface : Colors.grey[300]),
+                        foregroundColor: _isRead 
+                            ? Colors.white 
+                            : (isDark ? AppColors.darkText : AppColors.darkBrownText),
+                      ),
+                      icon: Icon(_isRead ? Icons.check_circle : Icons.check_circle_outline),
+                      label: Text(_isRead ? 'Прочитано ✓' : 'Позначити як прочитано'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: _showRatingDialog,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isDark ? AppColors.darkText : AppColors.darkBrownText,
+                        side: BorderSide(
+                          color: isDark ? AppColors.darkBorder : AppColors.lightGold,
+                        ),
+                      ),
                       icon: const Icon(Icons.star_outline),
                       label: Text(
                         _userRating != null

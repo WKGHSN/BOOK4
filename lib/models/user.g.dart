@@ -24,13 +24,14 @@ class UserAdapter extends TypeAdapter<User> {
       favoriteBooks: (fields[4] as List).cast<String>(),
       booksRead: fields[5] as int,
       favoriteGenres: (fields[6] as List).cast<String>(),
+      readBooks: (fields[7] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(5)
       ..write(obj.booksRead)
       ..writeByte(6)
-      ..write(obj.favoriteGenres);
+      ..write(obj.favoriteGenres)
+      ..writeByte(7)
+      ..write(obj.readBooks);
   }
 
   @override

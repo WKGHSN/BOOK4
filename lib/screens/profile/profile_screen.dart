@@ -4,6 +4,7 @@ import '../../models/user.dart';
 import '../../models/book.dart';
 import '../../services/hive_service.dart';
 import '../auth/login_screen.dart';
+import '../book/book_detail_screen.dart';
 import '../../constants/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   User? _currentUser;
+  List<Book> _readBooks = [];
 
   @override
   void initState() {
@@ -25,6 +27,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _loadUserData() {
     setState(() {
       _currentUser = HiveService.getCurrentUser();
+      if (_currentUser != null) {
+        _readBooks = HiveService.getReadBooks(_currentUser!.id);
+      }
     });
   }
 
@@ -171,6 +176,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark 
+        ? AppColors.darkSurface.withValues(alpha: 0.9)
+        : Colors.white.withValues(alpha: 0.9);
+    final textColor = isDark ? AppColors.darkText : AppColors.darkBrownText;
+    final secondaryTextColor = isDark ? AppColors.darkTextSecondary : AppColors.softBrown;
+
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -231,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 // Статистика
                 Card(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: cardColor,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -243,11 +255,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               'Улюблених',
                               _currentUser!.favoriteBooks.length.toString(),
                               Icons.favorite,
+                              isDark,
                             ),
                             _buildStatItem(
                               'Прочитано',
                               _currentUser!.booksRead.toString(),
                               Icons.book,
+                              isDark,
                             ),
                           ],
                         ),
@@ -260,20 +274,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Дії (БЕЗ розділу "Налаштування")
                 Text(
                   'Дії',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: textColor,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Card(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: cardColor,
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.add_circle_outline),
-                        title: const Text('Додати власну книгу'),
-                        trailing: const Icon(Icons.chevron_right),
+                        leading: Icon(
+                          Icons.add_circle_outline,
+                          color: textColor,
+                        ),
+                        title: Text(
+                          'Додати власну книгу',
+                          style: TextStyle(color: textColor),
+                        ),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: textColor,
+                        ),
                         onTap: _showAddBookDialog,
                       ),
-                      const Divider(height: 1),
+                      Divider(height: 1, color: isDark ? AppColors.darkBorder : null),
                       ListTile(
                         leading: const Icon(
                           Icons.logout,
@@ -283,12 +308,155 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           'Вийти з акаунту',
                           style: TextStyle(color: AppColors.error),
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: textColor,
+                        ),
                         onTap: _logout,
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+
+                // Прочитані книги
+                Text(
+                  'Прочитані книги',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                if (_readBooks.isEmpty)
+                  Card(
+                    color: cardColor,
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.menu_book_outlined,
+                              size: 48,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.softBrown,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Ви ще не прочитали жодної книги',
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: secondaryTextColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _readBooks.length,
+                    itemBuilder: (context, index) {
+                      final book = _readBooks[index];
+                      return Card(
+                        color: cardColor,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: book.coverUrl != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Image.asset(
+                                    book.coverUrl!,
+                                    width: 40,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 40,
+                                        height: 56,
+                                        color: AppColors.lightGold,
+                                        child: const Icon(
+                                          Icons.book,
+                                          color: AppColors.goldenAccent,
+                                          size: 20,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Container(
+                                  width: 40,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.lightGold,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Icon(
+                                    Icons.book,
+                                    color: AppColors.goldenAccent,
+                                    size: 20,
+                                  ),
+                                ),
+                          title: Text(
+                            book.title,
+                            style: TextStyle(
+                              color: textColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                book.author,
+                                style: TextStyle(
+                                  color: secondaryTextColor,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: AppColors.goldenAccent,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    book.averageRating.toStringAsFixed(1),
+                                    style: TextStyle(
+                                      color: secondaryTextColor,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: textColor,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BookDetailScreen(book: book),
+                              ),
+                            ).then((_) => _loadUserData());
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 const SizedBox(height: 32),
               ],
             ),
@@ -298,7 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
+  Widget _buildStatItem(String label, String value, IconData icon, bool isDark) {
     return Column(
       children: [
         Icon(
@@ -311,11 +479,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           value,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.darkText : AppColors.darkBrownText,
               ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.softBrown,
+          ),
         ),
       ],
     );
