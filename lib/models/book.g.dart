@@ -1,10 +1,8 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+
 
 part of 'book.dart';
 
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
+
 
 class BookAdapter extends TypeAdapter<Book> {
   @override

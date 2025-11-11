@@ -29,15 +29,16 @@ class HiveService {
     await Hive.openBox<Book>(booksBox);
     await Hive.openBox<User>(usersBox);
     await Hive.openBox<Rating>(ratingsBox);
-    await Hive.openBox(currentUserKey);
-    await Hive.openBox(themeKey);
+    await Hive.openBox('user_settings'); // Для currentUserKey
+    await Hive.openBox('app_settings');  // Для themeKey
   }
 
   // Отримання боксів
   static Box<Book> getBooksBox() => Hive.box<Book>(booksBox);
   static Box<User> getUsersBox() => Hive.box<User>(usersBox);
   static Box<Rating> getRatingsBox() => Hive.box<Rating>(ratingsBox);
-  static Box getSettingsBox() => Hive.box(currentUserKey);
+  static Box getUserSettingsBox() => Hive.box('user_settings');
+  static Box getAppSettingsBox() => Hive.box('app_settings');
 
   // Операції з книгами
   static Future<void> addBook(Book book) async {
@@ -86,12 +87,12 @@ class HiveService {
   }
 
   static Future<void> setCurrentUserId(String userId) async {
-    final box = getSettingsBox();
+    final box = getUserSettingsBox();
     await box.put(currentUserKey, userId);
   }
 
   static String? getCurrentUserId() {
-    final box = getSettingsBox();
+    final box = getUserSettingsBox();
     return box.get(currentUserKey);
   }
 
@@ -104,7 +105,7 @@ class HiveService {
   }
 
   static Future<void> logout() async {
-    final box = getSettingsBox();
+    final box = getUserSettingsBox();
     await box.delete(currentUserKey);
   }
 
@@ -220,14 +221,14 @@ class HiveService {
     return [];
   }
 
-  // Тема
+  // Тема - ВИПРАВЛЕНІ МЕТОДИ
   static Future<void> setTheme(bool isDark) async {
-    final box = getSettingsBox();
-    await box.put(themeKey, isDark);
+    final box = getAppSettingsBox();
+    await box.put('theme', isDark);
   }
 
   static bool getTheme() {
-    final box = getSettingsBox();
-    return box.get(themeKey, defaultValue: false) as bool;
+    final box = getAppSettingsBox();
+    return box.get('theme', defaultValue: false) as bool;
   }
 }

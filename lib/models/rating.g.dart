@@ -1,10 +1,8 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+
 
 part of 'rating.dart';
 
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
+
 
 class RatingAdapter extends TypeAdapter<Rating> {
   @override
